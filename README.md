@@ -497,3 +497,18 @@ time="2022-02-10T21:23:43Z" level=info msg="All records are already up to date"
 ![externaldns successful](./images/external-dns-successful.PNG)
 
 For more information and examples for ExternalDNS, see Setting up ExternalDNS for services on AWS (on the GitHub website) and Set up ExternalDNS (on the Kubernetes website).
+
+### Installing Nginx-Ingress
+Traefik is going to be our Ingress Controller
+
+Let's install it with a Helm chart, in its own namespace
+
+First, let's add the Traefik chart repository:
+
+helm repo add traefik https://helm.traefik.io/traefik
+Then, install the chart:
+
+helm upgrade --install traefik traefik/traefik \
+    --create-namespace --namespace traefik \
+    --set "ports.websecure.tls.enabled=true"
+(that option that we added enables HTTPS, it will be useful later!)
