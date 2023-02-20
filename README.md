@@ -32,7 +32,7 @@ This will show you how to deploy a complete CI/CD pipeline on AWS EKS
 
 - CI/CD with GitLab
 
-### Get ready!
+###                     Get ready!
 We're going to set up a whole Continous Deployment pipeline
 ... for Kubernetes apps
 ... on a Kubernetes cluster
@@ -64,7 +64,7 @@ If you want to run this on your own...
 - Remember to shut them down when you're done!
 - In the immortal words of Cloud Economist Corey Quinn: You're charged for what you forget to turn off.
 
-### Deploying our EKS cluster
+###                     Deploying our EKS cluster
 - If we wanted to deploy Kubernetes manually, what would we need to do? (not that I recommend doing that...)
 - Control plane (etcd, API server, scheduler, controllers)
 - Nodes (VMs with a container engine + the Kubelet agent; CNI setup)
@@ -218,7 +218,7 @@ We're going to use one of the most common controllers: a Deployment
 - Helm charts give us a way to customize what we deploy
 - Helm can also keep track of what we install (for easier uninstall and updates)
 
-### Helm concepts
+###                             Helm concepts
 - helm is a CLI tool
 - It is used to find, install, upgrade charts
 - A chart is an archive containing templatized YAML bundles
@@ -315,7 +315,7 @@ Connect to it:
 
 ![juice-shop page](./images/1-page.PNG)
 
-### ExternalDNS
+###                             ExternalDNS
 ExternalDNS will automatically create DNS records from Kubernetes resources
         - Services (with the annotation external-dns.alpha.kubernetes.io/hostname)
         - Ingresses (automatically)
@@ -498,7 +498,7 @@ time="2022-02-10T21:23:43Z" level=info msg="All records are already up to date"
 
 For more information and examples for ExternalDNS, see Setting up ExternalDNS for services on AWS (on the GitHub website) and Set up ExternalDNS (on the Kubernetes website).
 
-### Installing Nginx-Ingress
+###                     Installing Nginx-Ingress
 Traefik is going to be our Ingress Controller
 
 Let's install it with a Helm chart, in its own namespace
