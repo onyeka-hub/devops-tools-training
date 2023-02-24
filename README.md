@@ -267,16 +267,23 @@ Note: it is also possible to install directly a chart, with --repo https://...
 "Installing a chart" means creating a release. In the previous exemple, the release was named "my-juice-shop". We can also use --generate-name to ask Helm to generate a name for us.
 
 List the releases:
-        `helm list`
+  ```
+  helm list
+  ```
 
 Check that we have a my-juice-shop-... Pod up and running:
-        `kubectl get pods`
+  ```
+  kubectl get pods
+  ```
 
 ### Viewing resources of a release
 This specific chart labels all its resources with a release label. We can use a selector to see these resources
 
 List all the resources created by this release:
-        `kubectl get all --selector=app.kubernetes.io/instance=juice-shop`
+  ```
+  kubectl get all --selector=app.kubernetes.io/instance=juice-shop
+  ```
+
 Note: this label wasn't added automatically by Helm.
 It is defined in that chart. In other words, not all charts will provide this label.
 
@@ -289,11 +296,15 @@ Instead, we are going to set a value. Values are parameters that the chart can u
 We can inspect a chart with helm show or helm inspect
 Look at the README for the app:
 
-        `helm show readme juice/juice-shop`
+  ```
+  helm show readme juice/juice-shop
+  ```
 
 Look at the values and their defaults:
 
-        `helm show values juice/juice-shop`
+  ```
+  helm show values juice/juice-shop
+  ```
 
 The values may or may not have useful comments. The readme may or may not have (accurate) explanations for the values. (If we're unlucky, there won't be any indication about how to use the values!)
 
