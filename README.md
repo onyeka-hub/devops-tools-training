@@ -359,6 +359,7 @@ We will use helm upgrade --install instead of helm install, (that way, if we wan
 We will use the --create-namespace and --namespace ... options
 
 To keep things boring and predictible, if we are installing chart xyz:
+
         - we will install it in namespace xyz
         - we will name the release xyz as well
 
@@ -770,6 +771,7 @@ Prometheus also has an alert-manager component to trigger alerts
 
 ### Installing Prometheus and Grafana
 - A complete metrics stack needs at least:
+
         - the Prometheus server (collects metrics and stores them efficiently)
         - a collection of exporters (exposing metrics to Prometheus)
         - Grafana
@@ -834,6 +836,7 @@ spec:
 Connect to Grafana at grafana.onyeka.ga, (remember that the DNS record might take a few minutes to come up)
 
 ![grafana page](./images/grafana-page.PNG)
+
 ### Grafana credentials
 What could the login and password be?
 
@@ -906,6 +909,7 @@ These Secret resources can be used in many places (Ingress, mTLS, ...)
 
 ### Getting signatures
 cert-manager can use multiple Issuers (another CRD), including:
+
 - self-signed
 - cert-manager acting as a CA
 - the ACME protocol (notably used by Let's Encrypt)
@@ -994,9 +998,6 @@ kubectl get sa -n cert-manager
 kubectl describe serviceaccount cert-manager2 -n cert-manager
 ```
 
-kubectl get sa -n cert-manager
-```
-
 3. Then, install cert-manager:
 
 Before installing the chart, you must first install the cert-manager CustomResourceDefinition resources. This is performed in a separate step to allow you to easily uninstall and reinstall cert-manager without deleting your installed custom resources.
@@ -1017,7 +1018,7 @@ helm install cert-manager cert-manager \
     --create-namespace --namespace cert-manager \
 ```
 
-4.    Verify that the deployment was successful:
+4. Verify that the deployment was successful:
 ```
 $ kubectl get deployments -n cert-manager
 NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
@@ -1079,11 +1080,11 @@ spec:
     kind: ClusterIssuer
 ```
 
-The name, secretName, and dnsNames don't have to match
+The name, secretName, and dnsNames don't have to match.
 
-There can be multiple dnsNames
+There can be multiple dnsNames.
 
-The issuerRef must match the ClusterIssuer that we created earlier
+The issuerRef must match the ClusterIssuer that we created earlier.
 
 Apply the certificate.yaml file
 
