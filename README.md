@@ -252,10 +252,14 @@ We can also use the Artifact Hub search feature. Go to https://artifacthub.io/. 
 ### Installing the chart
 - Click on the "Install" button, it will show instructions
 - First, add the repository for that chart:
-        `helm repo add securecodebox https://charts.securecodebox.io/`
+  ```
+  helm repo add securecodebox https://charts.securecodebox.io/
+  ```
 
 - Then, install the chart:
-        `helm upgrade --install juice-shop securecodebox/juice-shop`
+  ```
+  helm upgrade --install juice-shop securecodebox/juice-shop
+  ```
 
 Note: it is also possible to install directly a chart, with --repo https://...
 
