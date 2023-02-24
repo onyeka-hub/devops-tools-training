@@ -284,9 +284,11 @@ Instead, we are going to set a value. Values are parameters that the chart can u
 ### Checking possible values
 We can inspect a chart with helm show or helm inspect
 Look at the README for the app:
+
         `helm show readme juice/juice-shop`
 
 Look at the values and their defaults:
+
         `helm show values juice/juice-shop`
 
 The values may or may not have useful comments. The readme may or may not have (accurate) explanations for the values. (If we're unlucky, there won't be any indication about how to use the values!)
@@ -295,7 +297,9 @@ The values may or may not have useful comments. The readme may or may not have (
 Values can be set when installing a chart, or when upgrading it. We are going to update my-juice-shop to change the type of the service.
 
 Update my-juice-shop:
+
         `helm upgrade my-juice-shop juice/juice-shop --set service.type=NodePort`
+        
 Note that we have to specify the chart that we use (juice/my-juice-shop), even if we just want to update some values.
 
 We can set multiple values. If we want to set many values, we can use -f/--values and pass a YAML file with all the values.
