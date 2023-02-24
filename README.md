@@ -312,9 +312,9 @@ The values may or may not have useful comments. The readme may or may not have (
 Values can be set when installing a chart, or when upgrading it. We are going to update my-juice-shop to change the type of the service.
 
 Update my-juice-shop:
-```
-        helm upgrade my-juice-shop juice/juice-shop --set service.type=NodePort
-```
+  ```
+  helm upgrade my-juice-shop juice/juice-shop --set service.type=NodePort
+  ```
 
 Note that we have to specify the chart that we use (juice/my-juice-shop), even if we just want to update some values.
 
@@ -326,18 +326,23 @@ All unspecified values will take the default values defined in the chart.
 Let's check the app that we just installed.
 
 Check the node port allocated to the service:
-        `kubectl get service my-juice-shop`
+  ```
+  kubectl get service my-juice-shop
+  ```
 
 PORT=$(kubectl get service my-juice-shop -o jsonpath={..nodePort})
 
 Connect to it:
-        `curl localhost:$PORT/`
+  ```
+  curl localhost:$PORT/
+  ```
 
 ![juice-shop page](./images/1-page.PNG)
 
 
 ## ExternalDNS
 ExternalDNS will automatically create DNS records from Kubernetes resources
+
         - Services (with the annotation external-dns.alpha.kubernetes.io/hostname)
         - Ingresses (automatically)
 
