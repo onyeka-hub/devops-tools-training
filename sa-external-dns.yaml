@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::958217526797:role/eksctl-onyeka-eks-official-addon-iamservicea-Role1-1UV1HULBIYQAR
+  creationTimestamp: "2023-02-21T10:17:04Z"
+  labels:
+    app.kubernetes.io/managed-by: eksctl
+  name: externaldns
+  namespace: externaldns
+  resourceVersion: "37210"
+  uid: 00142afa-9013-426c-9c8d-7c840b0e24c3
+secrets:
+- name: externaldns-token-krd7s

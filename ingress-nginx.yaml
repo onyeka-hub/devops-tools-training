@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "ingress-nginx"
+  namespace: dev
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "nginx.onyeka.ga"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: nginx-service
+            port:
+              number: 80
+
+  tls:
+    - hosts:
+      - "nginx.onyeka.ga"
+      secretName: "nginx.onyeka.ga"

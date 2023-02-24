@@ -1,0 +1,11 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: nginx.onyeka.ga
+spec:
+  secretName: nginx.onyeka.ga
+  dnsNames:
+  - nginx.onyeka.ga
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer
