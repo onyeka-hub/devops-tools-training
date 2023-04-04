@@ -5,7 +5,7 @@ metadata:
   labels:
     tier: frontend
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       tier: frontend
@@ -30,3 +30,75 @@ spec:
           items:
           - key: index-file
             path: index.html
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: website-index-file
+data:
+  # file to be mounted inside a volume
+  index-file: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <title>Jesus is Lord!</title>
+    <style>
+    html { color-scheme: light dark; }
+    body { width: 35em; margin: 0 auto;
+    font-family: Tahoma, Verdana, Arial, sans-serif; }
+    </style>
+    </head>
+    <body>
+    <h1>Jesus is Lord!</h1>
+    <p>If you see this page, the nginx web server is successfully installed and
+    working. Further configuration is required.</p>
+
+    <p>For online documentation and support please refer to
+    <a href="http://nginx.org/">nginx.org</a>.<br/>
+    Commercial support is available at
+    <a href="http://nginx.com/">nginx.com</a>.</p>
+
+    <p><em>Thank you for using nginx.</em></p>
+    </body>
+    </html>
+    
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    tier: frontend
+  ports:
+    - protocol: TCP
+      port: 80 # This is the port the service is listening on or the port of the service
+      targetPort: 80 # This is the port the container is listening on or the port of the pod
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "ingress-nginx"
+  annotations:
+    # add an annotation indicating the issuer to use.
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "nginx.onyeka.ga"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: nginx-service
+            port:
+              number: 80
+
+  tls:
+    - hosts:
+      - "nginx.onyeka.ga"
+      secretName: "nginx.onyeka.ga"

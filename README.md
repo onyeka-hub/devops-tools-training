@@ -258,7 +258,7 @@ We can also use the Artifact Hub search feature. Go to https://artifacthub.io/. 
 
 - Then, install the chart:
   ```
-  helm upgrade --install juice-shop securecodebox/juice-shop
+  helm upgrade --install juice-shop securecodebox/juice-shop  --namespace juice-shop --create-namespace
   ```
 
 Note: it is also possible to install directly a chart, with --repo https://...
@@ -377,7 +377,7 @@ ExternalDNS is a pod that runs in your Amazon EKS cluster. To use ExternalDNS as
 ### Steps
 1. Set up IAM permissions to give the ExternalDNS pod permissions to create, update, and delete Route 53 records in your AWS account.
 
-From the aws console crerate an IAM policy with the policy below and name it 'externaldns':
+From the aws console create an IAM policy with the policy below and name it 'externaldns':
 ```
 {
   "Version": "2012-10-17",
@@ -410,14 +410,14 @@ From the aws console crerate an IAM policy with the policy below and name it 'ex
 ```
 eksctl create iamserviceaccount --name SERVICE_ACCOUNT_NAME --namespace NAMESPACE --cluster CLUSTER_NAME --attach-policy-arn IAM_POLICY_ARN --approve
 ```
-Or as in my case
+Or
 ```
 eksctl create iamserviceaccount --name external-dns --namespace external-dns --cluster onyeka-eks-official --attach-policy-arn arn:aws:iam::958217526797:policy/external-dns --approve
 ```
 
 To check the name of your service account, run the following command:
 ```
-kubectl get sa -n externaldns
+kubectl get sa -n external-dns
 ```
 Example output:
 ```
@@ -440,7 +440,7 @@ helm upgrade --install external-dns external-dns/external-dns --set serviceAccou
 ```
 4.    Verify that the deployment was successful:
 ```
-kubectl get deployments
+kubectl get deployments -n external-dns
 ```
 Example output:
 ```
@@ -587,7 +587,7 @@ Deploy the Ingress by running the following:
 ```
 kubectl apply -f ingress-juice-shop.yaml
 ```
-
+**Note**: Make sure that the juice-shop service is listening on port 80 otherwise edit it
 ## Blocker
 ```
 $ kubectl apply -f ingress-juice-shop.yaml 
@@ -932,42 +932,9 @@ cert-manager will honor that request and create a TLS Secret
 
 ### Installing cert-manager
 
-aws iam create-policy --policy-name PolicyForCertManager --policy-document C:/Users/ONYEKA/OneDrive/Documents/onyeka-workspace/end-to-end-encryption-on-amazon-eks/1-IAMRole/policy.json
-
-aws iam create-role --role-name RoleForCertManager --assume-role-policy-document C:/Users/ONYEKA/OneDrive/Documents/onyeka-workspace/end-to-end-encryption-on-amazon-eks/1-IAMRole/trustpolicy.json
-
-
-aws iam attach-role-policy --policy-arn arn:aws:iam::aws:policy/PolicyForCertManager --role-nameRoleForCertManager
-
 ### Steps
-1. Set up IAM permissions to give the cert-manager pod permissions to validate that you own the Route 53 domain.
-
-From the aws console crerate an IAM policy with the policy below and name it 'PolicyForCertManager':
-```
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": "route53:GetChange",
-            "Resource": "arn:aws:route53:::change/*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "route53:ChangeResourceRecordSets",
-                "route53:ListResourceRecordSets"
-            ],
-            "Resource": "arn:aws:route53:::hostedzone/Z056289126DQ1L1BA6P4J"
-        }
-    ]
-}
-```
-**Note**: hosted zone ID - Z056289126DQ1L1BA6P4J
-
-2. Use the preceding policy and the trustpolicy.json code below to create the IAM role for the service account: 
-
-**Note**: create the cert-manager namespace
+1. Set up an IAM Role
+cert-manager needs to be able to add records to Route53 in order to solve the DNS01 challenge. To enable this, create a IAM policy with the name PolicyForCertManager, with following permissions:
 
 ```
 {
@@ -975,30 +942,90 @@ From the aws console crerate an IAM policy with the policy below and name it 'Po
   "Statement": [
     {
       "Effect": "Allow",
-      "Principal": {
-        "AWS": "arn:aws:iam::958217526797:role/onyeka-eks-official-cluster-20230221073253217900000003"
-      },
-      "Action": "sts:AssumeRole"
+      "Action": "route53:GetChange",
+      "Resource": "arn:aws:route53:::change/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "route53:ChangeResourceRecordSets",
+        "route53:ListResourceRecordSets"
+      ],
+      "Resource": "arn:aws:route53:::hostedzone/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "route53:ListHostedZonesByName",
+      "Resource": "*"
     }
   ]
 }
 ```
 
-```
-eksctl create iamserviceaccount --name my-service-account --namespace default --cluster my-cluster --role-name "my-role" --attach-policy-arn IAM_POLICY_ARN --approve
-```
-Or as in my case
+**Note**: The route53:ListHostedZonesByName statement can be removed if you specify the (optional) hostedZoneID. You can further tighten the policy by limiting the hosted zone that cert-manager has access to (e.g. arn:aws:route53:::hostedzone/DIKER8JEXAMPLE).
+
+2. Create the IAM role for cert-manager. After you create the IAM policy, you must create an IAM role with **Select trusted entity - Custom trust policy**. Use the trustpolicy.json sample file below as a guide.
 
 ```
-eksctl create iamserviceaccount --name cert-manager2 --namespace cert-manager --cluster onyeka-eks-official --attach-policy-arn arn:aws:iam::958217526797:policy/PolicyForCertManager --approve
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::958217526797:oidc-provider/oidc.eks.us-east-2.amazonaws.com/id/8BB983F9CC161E9DF9D69E994B6F6F3E"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringEquals": {
+                    "oidc.eks.us-east-2.amazonaws.com/id/8BB983F9CC161E9DF9D69E994B6F6F3E:sub": "system:serviceaccount:cert-manager:cert-manager",
+                    "oidc.eks.us-east-2.amazonaws.com/id/8BB983F9CC161E9DF9D69E994B6F6F3E:aud": "sts.amazonaws.com"
+                }
+            }
+        }
+    ]
+}
 ```
+
+3. Create a Kubernetes service account and associate it with IAM role. You can use eksctl command bellow. **Note**: create the cert-manager namespace before running the command:
+
+```
+eksctl create iamserviceaccount --name my-service-account --namespace default --cluster my-cluster --attach-role-arn <ARN of the role to attach to the iamserviceaccount> --approve
+```
+
+Or
+```
+eksctl create iamserviceaccount --name cert-manager --namespace cert-manager --cluster onyeka-eks-19-8-0 --attach-role-arn arn:aws:iam::958217526797:role/RoleForCertManager --approve
+```
+
+To check the name of your service account, run the following command:
 ```
 kubectl get sa -n cert-manager
-
-kubectl describe serviceaccount cert-manager2 -n cert-manager
+```
+Example output:
+```
+NAME           SECRETS   AGE
+default        1         23h
+cert-manager   1         23h
 ```
 
-3. Then, install cert-manager:
+In the preceding example output, cert-manager is the name that was given to the service account when it was created. Make sure you have eksctl intalled on your system.
+
+4. Create a secret for the cert-manager sa if it does not exist with the below yaml file.
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cert-manager
+  namespace:  cert-manager
+  annotations:
+    kubernetes.io/service-account.name: "cert-manager"
+type: kubernetes.io/service-account-token
+```
+
+
+5. Then, install cert-manager:
 
 Before installing the chart, you must first install the cert-manager CustomResourceDefinition resources. This is performed in a separate step to allow you to easily uninstall and reinstall cert-manager without deleting your installed custom resources.
 
@@ -1009,7 +1036,7 @@ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/
 helm repo add jetstack https://charts.jetstack.io
 
 ## Install the cert-manager helm chart
-helm upgrade -i cert-manager --version v1.11.0 jetstack/cert-manager -n cert-manager --set serviceAccount.create=false,serviceAccount.name=cert-manager2
+helm upgrade -i cert-manager --version v1.11.0 jetstack/cert-manager -n cert-manager --set serviceAccount.create=false,serviceAccount.name=cert-manager
 
 OR Let's add the repo and install the cert-manager Helm chart with this one-liner:
 
@@ -1018,9 +1045,15 @@ helm install cert-manager cert-manager \
     --create-namespace --namespace cert-manager \
 ```
 
-4. Verify that the deployment was successful:
+If you want to completely uninstall cert-manager from your cluster, you will also need to delete the previously installed CustomResourceDefinition resources:
 ```
-$ kubectl get deployments -n cert-manager
+kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.crds.yam
+```
+
+6. Verify that the deployment was successful:
+```
+kubectl get deployments -n cert-manager
+
 NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
 cert-manager              1/1     1            1           89s
 cert-manager-cainjector   1/1     1            1           89s
@@ -1035,27 +1068,29 @@ kind: ClusterIssuer
 metadata:
   name: letsencrypt-staging
 spec:
-    # You must replace this email address with your own.
-    # Let's Encrypt will use this to contact you about expiring
-    # certificates, and issues related to your account.
   acme:
     email: "onyekagodonu@yahoo.com"
     server: https://acme-staging-v02.api.letsencrypt.org/directory
+    # To use the production environment, use the following line instead:
+    #server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
-      # Secret resource that will be used to store the account's private key.
       name: letsencrypt-staging
-    # Add a single challenge solver, HTTP01 using nginx
     solvers:
-    - http01:
-        ingress:
-          class: nginx
+    - selector:
+        dnsZones:
+          - "onyeka.ga"
+      dns01:
+        route53:
+          region: "us-east-2"
+          hostedZoneID: "Z0250004LZ1MP3VIBU47"
 ```
 
 Create the ClusterIssuer:
 ```
-kubectl apply cm-clusterissuer.yaml
+kubectl apply -f cm-clusterissuer.yaml
 
-$ kubectl get clusterissuer
+kubectl get clusterissuer
+
 NAME                  READY   AGE
 letsencrypt-staging   True    7m36s
 ```
@@ -1070,11 +1105,11 @@ letsencrypt-staging   True    7m36s
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: ngin.onyeka.ga
+  name: juice-shop.onyeka.ga
 spec:
-  secretName: nginx.onyeka.ga
+  secretName: juice-shop.onyeka.ga
   dnsNames:
-  - nginx.onyeka.ga
+  - juice-shop.onyeka.ga
   issuerRef:
     name: letsencrypt-staging
     kind: ClusterIssuer
@@ -1089,7 +1124,7 @@ The issuerRef must match the ClusterIssuer that we created earlier.
 Apply the certificate.yaml file
 
 ```
-kubectl apply -f certificate.yaml -n dev
+kubectl apply -f certificate.yaml -n juice-shop
 ```
 #### What's happening?
 cert-manager will create: the secret key, a Pod, a Service, and an Ingress to complete the HTTP challenge. Then it waits for the challenge to complete

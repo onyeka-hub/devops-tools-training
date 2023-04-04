@@ -9,7 +9,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: "juice-shop2.onyeka.ga"
+  - host: "juice-shop.onyeka.ga"
     http:
       paths:
       - pathType: Prefix
