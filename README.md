@@ -1,5 +1,11 @@
 # Continuous Deployment with GitLab, Helm, and AWS EKS
 
+## References
+
+https://2021-03-lke.container.training/
+
+https://www.youtube.com/watch?v=ZFABsUCMESU&list=PLTnRtjQN5ieYD97JCZtcGbIjq1EINih2G&index=7
+
 This will show you how to deploy a complete CI/CD pipeline on AWS EKS
 
 ## Module 1
@@ -252,14 +258,14 @@ We can also use the Artifact Hub search feature. Go to https://artifacthub.io/. 
 ### Installing the chart
 - Click on the "Install" button, it will show instructions
 - First, add the repository for that chart:
-  ```
-  helm repo add securecodebox https://charts.securecodebox.io/
-  ```
+```
+helm repo add securecodebox https://charts.securecodebox.io/
+```
 
 - Then, install the chart:
-  ```
-  helm upgrade --install juice-shop securecodebox/juice-shop  --namespace juice-shop --create-namespace
-  ```
+```
+helm upgrade --install juice-shop securecodebox/juice-shop  --namespace juice-shop --create-namespace
+```
 
 Note: it is also possible to install directly a chart, with --repo https://...
 
@@ -267,22 +273,22 @@ Note: it is also possible to install directly a chart, with --repo https://...
 "Installing a chart" means creating a release. In the previous exemple, the release was named "my-juice-shop". We can also use --generate-name to ask Helm to generate a name for us.
 
 List the releases:
-  ```
-  helm list
-  ```
+```
+helm list
+```
 
 Check that we have a my-juice-shop-... Pod up and running:
-  ```
-  kubectl get pods
-  ```
+```
+kubectl get pods
+```
 
 ### Viewing resources of a release
 This specific chart labels all its resources with a release label. We can use a selector to see these resources
 
 List all the resources created by this release:
-  ```
-  kubectl get all --selector=app.kubernetes.io/instance=juice-shop
-  ```
+```
+kubectl get all --selector=app.kubernetes.io/instance=juice-shop -n juice-shop
+```
 
 Note: this label wasn't added automatically by Helm.
 It is defined in that chart. In other words, not all charts will provide this label.
@@ -296,15 +302,15 @@ Instead, we are going to set a value. Values are parameters that the chart can u
 We can inspect a chart with helm show or helm inspect
 Look at the README for the app:
 
-  ```
-  helm show readme juice/juice-shop
-  ```
+```
+helm show readme securecodebox/juice-shop
+```
 
 Look at the values and their defaults:
 
-  ```
-  helm show values juice/juice-shop
-  ```
+```
+helm show values securecodebox/juice-shop
+```
 
 The values may or may not have useful comments. The readme may or may not have (accurate) explanations for the values. (If we're unlucky, there won't be any indication about how to use the values!)
 
@@ -312,9 +318,9 @@ The values may or may not have useful comments. The readme may or may not have (
 Values can be set when installing a chart, or when upgrading it. We are going to update my-juice-shop to change the type of the service.
 
 Update my-juice-shop:
-  ```
-  helm upgrade my-juice-shop juice/juice-shop --set service.type=NodePort
-  ```
+```
+helm upgrade juice-shop securecodebox/juice-shop --set service.type=NodePort -n juice-shop
+```
 
 Note that we have to specify the chart that we use (juice/my-juice-shop), even if we just want to update some values.
 
@@ -326,16 +332,16 @@ All unspecified values will take the default values defined in the chart.
 Let's check the app that we just installed.
 
 Check the node port allocated to the service:
-  ```
-  kubectl get service my-juice-shop
-  ```
+```
+kubectl get service -n juice-shop 
+```
 
 PORT=$(kubectl get service my-juice-shop -o jsonpath={..nodePort})
 
 Connect to it:
-  ```
-  curl localhost:$PORT/
-  ```
+```
+curl localhost:$PORT/
+```
 
 ![juice-shop page](./images/1-page.PNG)
 
@@ -343,8 +349,8 @@ Connect to it:
 ## ExternalDNS
 ExternalDNS will automatically create DNS records from Kubernetes resources
 
-        - Services (with the annotation external-dns.alpha.kubernetes.io/hostname)
-        - Ingresses (automatically)
+- Services (with the annotation external-dns.alpha.kubernetes.io/hostname)
+- Ingresses (automatically)
 
 It requires a domain name (obviously)... And that domain name should be configurable through an API. As of April 2021, it supports a few dozens of providers. We're going to use AWS DNS.
 
@@ -360,8 +366,8 @@ We will use the --create-namespace and --namespace ... options
 
 To keep things boring and predictible, if we are installing chart xyz:
 
-        - we will install it in namespace xyz
-        - we will name the release xyz as well
+- we will install it in namespace xyz
+- we will name the release xyz as well
 
 ### Installing ExternalDNS
 First, let's add the Externaldns repo:
@@ -377,7 +383,7 @@ ExternalDNS is a pod that runs in your Amazon EKS cluster. To use ExternalDNS as
 ### Steps
 1. Set up IAM permissions to give the ExternalDNS pod permissions to create, update, and delete Route 53 records in your AWS account.
 
-From the aws console create an IAM policy with the policy below and name it 'externaldns':
+From the aws console create an IAM policy with the policy below and name it 'external-dns':
 ```
 {
   "Version": "2012-10-17",
@@ -406,19 +412,20 @@ From the aws console create an IAM policy with the policy below and name it 'ext
 ```
 **Note**: You can also adjust the preceding policy to allow updates to explicit hosted zone IDs.
 
-2. Use the preceding policy to create an IAM role for the service account:
+2. Use the preceding policy to create a service account for external-dns:
 ```
 eksctl create iamserviceaccount --name SERVICE_ACCOUNT_NAME --namespace NAMESPACE --cluster CLUSTER_NAME --attach-policy-arn IAM_POLICY_ARN --approve
 ```
 Or
 ```
-eksctl create iamserviceaccount --name external-dns --namespace external-dns --cluster onyeka-eks-official --attach-policy-arn arn:aws:iam::958217526797:policy/external-dns --approve
+eksctl create iamserviceaccount --name external-dns --namespace external-dns --cluster onyeka-eks-version-19-20-0 --attach-policy-arn arn:aws:iam::255913473442:policy/external-dns --approve
 ```
 
 To check the name of your service account, run the following command:
 ```
 kubectl get sa -n external-dns
 ```
+
 Example output:
 ```
 NAME           SECRETS   AGE
@@ -432,25 +439,29 @@ In the preceding example output, external-dns is the name that was given to the 
 ```
 helm upgrade --install external-dns external-dns/external-dns \
   --namespace external-dns --create-namespace \
-  --set serviceAccount.create=false,serviceAccount.name=extternaldns
+  --set serviceAccount.create=false,serviceAccount.name=external-dns
 ```
 Or
 ```
 helm upgrade --install external-dns external-dns/external-dns --set serviceAccount.create=false,serviceAccount.name=external-dns --namespace external-dns
 ```
+
 4.    Verify that the deployment was successful:
 ```
 kubectl get deployments -n external-dns
 ```
+
 Example output:
 ```
 NAME           READY   UP-TO-DATE   AVAILABLE   AGE
 external-dns   1/1     1            1           85m
 ```
+
 You can also check the logs to verify that the records are up to date:
 ```
 kubectl logs external-dns-9f85d8d5b-sx5fg
 ```
+
 Example output:
 ```
 ....
@@ -486,6 +497,7 @@ spec:
   selector:
     app: nginx
 ```
+
 ```
 kubectl apply SERVICE_MANIFEST_FILE_NAME.yaml
 ```
@@ -494,6 +506,7 @@ kubectl apply SERVICE_MANIFEST_FILE_NAME.yaml
 ```
 kubectl get svc
 ```
+
 Example output:
 ```
 NAME         TYPE           CLUSTER-IP      EXTERNAL-IP                                                              PORT(S)        AGE
@@ -507,6 +520,7 @@ Check the logs to verify that the Route 53 record was created:
 ```
 kubectl logs external-dns-9f85d8d5b-sx5fg
 ```
+
 Example output:
 ```
 ...
@@ -546,8 +560,62 @@ helm upgrade -i ingress-nginx ingress-nginx/ingress-nginx \
     --version 4.2.3 \
     --create-namespace --namespace ingress-nginx\
 ```
+
 ```
-helm upgrade -i ingress-nginx ingress-nginx/ingress-nginx --version 4.2.3 --create-namespace --namespace ingress-nginx 
+helm upgrade -i ingress-nginx ingress-nginx/ingress-nginx --version 4.8.3 --create-namespace --namespace ingress-nginx 
+```
+
+Output
+```
+amespace ingress-nginx
+Release "ingress-nginx" does not exist. Installing it now.
+NAME: ingress-nginx
+LAST DEPLOYED: Tue Nov 21 08:43:45 2023
+NAMESPACE: ingress-nginx
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+The ingress-nginx controller has been installed.
+It may take a few minutes for the LoadBalancer IP to be available.
+You can watch the status by running 'kubectl --namespace ingress-nginx get services -o wide -w ingress-nginx-controller'
+
+An example Ingress that makes use of the controller:
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: example
+    namespace: foo
+  spec:
+    ingressClassName: nginx
+    rules:
+      - host: www.example.com
+        http:
+          paths:
+            - pathType: Prefix
+              backend:
+                service:
+                  name: exampleService
+                  port:
+                    number: 80
+              path: /
+    # This section is only required if TLS is to be enabled for the Ingress
+    tls:
+      - hosts:
+        - www.example.com
+        secretName: example-tls
+
+If TLS is enabled for the Ingress, a Secret containing the certificate and key must also be provided:
+
+  apiVersion: v1
+  kind: Secret
+  metadata:
+    name: example-tls
+    namespace: foo
+  data:
+    tls.crt: <base64 encoded cert>
+    tls.key: <base64 encoded key>
+  type: kubernetes.io/tls
 ```
 
 Checking the ingress controller
@@ -585,9 +653,11 @@ spec:
 
 Deploy the Ingress by running the following:
 ```
-kubectl apply -f ingress-juice-shop.yaml
+kubectl apply -f ingress-juice-shop.yaml -n juice-shop
 ```
+
 **Note**: Make sure that the juice-shop service is listening on port 80 otherwise edit it
+
 ## Blocker
 ```
 $ kubectl apply -f ingress-juice-shop.yaml 
@@ -772,10 +842,10 @@ Prometheus also has an alert-manager component to trigger alerts
 ### Installing Prometheus and Grafana
 - A complete metrics stack needs at least:
 
-        - the Prometheus server (collects metrics and stores them efficiently)
-        - a collection of exporters (exposing metrics to Prometheus)
-        - Grafana
-        - a collection of Grafana dashboards (building them from scratch is tedious)
+- the Prometheus server (collects metrics and stores them efficiently)
+- a collection of exporters (exposing metrics to Prometheus)
+- Grafana
+- a collection of Grafana dashboards (building them from scratch is tedious)
 
 - The Helm chart kube-prometheus-stack combines all these elements
 
@@ -833,6 +903,11 @@ spec:
               number: 80
 ```
 
+Deploy the Ingress by running the following:
+```
+kubectl apply -f ingress-grafana.yaml -n kube-prometheus-stack
+```
+
 Connect to Grafana at grafana.onyeka.ga, (remember that the DNS record might take a few minutes to come up)
 
 ![grafana page](./images/grafana-page.PNG)
@@ -851,6 +926,8 @@ Decode the Secret:
 ```
 kubectl get secret --namespace kube-prometheus-stack \
   kube-prometheus-stack-grafana -o json | jq '.data | map_values(@base64d)'
+
+kubectl get secrets kube-prometheus-stack-grafana -n kube-prometheus-stack -o json | jq '.data' 
 ```
 
 If you don't have the jq tool mentioned above, don't worry...
@@ -933,8 +1010,9 @@ cert-manager will honor that request and create a TLS Secret
 ### Installing cert-manager
 
 ### Steps
-1. Set up an IAM Role
-cert-manager needs to be able to add records to Route53 in order to solve the DNS01 challenge. To enable this, create a IAM policy with the name PolicyForCertManager, with following permissions:
+1. Set up an IAM policy
+
+cert-manager needs to be able to add records to Route53 in order to solve the DNS01 challenge. To enable this, create a IAM policy with the name **PolicyForCertManager**, with following permissions:
 
 ```
 {
@@ -964,7 +1042,7 @@ cert-manager needs to be able to add records to Route53 in order to solve the DN
 
 **Note**: The route53:ListHostedZonesByName statement can be removed if you specify the (optional) hostedZoneID. You can further tighten the policy by limiting the hosted zone that cert-manager has access to (e.g. arn:aws:route53:::hostedzone/DIKER8JEXAMPLE).
 
-2. Create the IAM role for cert-manager. After you create the IAM policy, you must create an IAM role with **Select trusted entity - Custom trust policy**. Use the trustpolicy.json sample file below as a guide.
+2. Create the IAM role for cert-manager with name **RoleForCertManager**. After you create the IAM policy, you must create an IAM role with **Select trusted entity - Custom trust policy**. Use the trustpolicy.json sample file below as a guide. Attach the **PolicyForCertManager** you created to this role.
 
 ```
 {
@@ -995,23 +1073,32 @@ eksctl create iamserviceaccount --name my-service-account --namespace default --
 
 Or
 ```
-eksctl create iamserviceaccount --name cert-manager --namespace cert-manager --cluster onyeka-eks-19-8-0 --attach-role-arn arn:aws:iam::958217526797:role/RoleForCertManager --approve
+eksctl create iamserviceaccount --name cert-manager --namespace cert-manager --cluster onyeka-eks-version-19-20-0 --attach-role-arn arn:aws:iam::255913473442:role/RoleForCertManager --approve
 ```
 
 To check the name of your service account, run the following command:
 ```
 kubectl get sa -n cert-manager
 ```
+
 Example output:
 ```
-NAME           SECRETS   AGE
-default        1         23h
-cert-manager   1         23h
+NAME                      SECRETS   AGE
+cert-manager              0         137m
+default                   0         147m
 ```
 
 In the preceding example output, cert-manager is the name that was given to the service account when it was created. Make sure you have eksctl intalled on your system.
 
-4. Create a secret for the cert-manager sa if it does not exist with the below yaml file.
+As you can see the serviceaccount does not have secrets/tokens. ServiceAccounts use signed JSON Web Tokens (JWTs) to authenticate to the Kubernetes API server, and to any other system where a trust relationship exists. Depending on how the token was issued (either time-limited using a TokenRequest or using a legacy mechanism with a Secret), a ServiceAccount token might also have an expiry time, an audience, and a time after which the token starts being valid. When a client that is acting as a ServiceAccount tries to communicate with the Kubernetes API server, the client includes an Authorization: Bearer `<token>` header with the HTTP request. The API server checks the validity of that bearer token as follows: 
+- Checks the token signature.
+- Checks whether the token has expired.
+- Checks whether object references in the token claims are currently valid.
+- Checks whether the token is currently valid.
+- Checks the audience claims.
+The TokenRequest API produces bound tokens for a ServiceAccount. This binding is linked to the lifetime of the client, such as a Pod, that is acting as that ServiceAccount.
+
+4. So we are going to create a secret with name secret-cert-manager.yaml for the cert-manager sa with the file below.
 
 ```yaml
 apiVersion: v1
@@ -1024,19 +1111,77 @@ metadata:
 type: kubernetes.io/service-account-token
 ```
 
+5. Patch the cert-manager's service account with the secret created with the below command 
+```
+kubectl patch serviceaccount <name of the service account> -p '{"secrets": [{"name": "name of the secret"}]}' -n namespace-of-the-serviceaccount
 
-5. Then, install cert-manager:
+kubectl patch serviceaccount cert-manager -p '{"secrets": [{"name": "cert-manager"}]}' -n cert-manager
+```
+
+Output
+```
+$ kubectl get sa -n cert-manager
+NAME                      SECRETS   AGE
+cert-manager              1         158m
+default                   0         168m
+```
+
+Or you can edit each service account and put the part for the secret as shown below
+
+```
+kubectl edit sa cert-manager -n cert-manage
+```
+
+## Before editing
+```
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::255913473442:role/RoleForCertManager
+  creationTimestamp: "2023-11-21T12:39:34Z"
+  labels:
+    app.kubernetes.io/managed-by: eksctl
+  name: cert-manager
+  namespace: cert-manager
+  resourceVersion: "815262"
+  uid: 2436d17c-42ed-4137-9336-f3d5bb1b7388
+```
+
+## After editing
+```
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::255913473442:role/RoleForCertManager
+  creationTimestamp: "2023-11-21T12:39:34Z"
+  labels:
+    app.kubernetes.io/managed-by: eksctl
+  name: cert-manager
+  namespace: cert-manager
+  resourceVersion: "850303"
+  uid: 2436d17c-42ed-4137-9336-f3d5bb1b7388
+secrets:
+- name: cert-manager
+```
+
+6. Then, install cert-manager:
 
 Before installing the chart, you must first install the cert-manager CustomResourceDefinition resources. This is performed in a separate step to allow you to easily uninstall and reinstall cert-manager without deleting your installed custom resources.
 
 ```
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.crds.yaml
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.crds.yaml
 
 ## Add the Jetstack Helm repository
 helm repo add jetstack https://charts.jetstack.io
 
 ## Install the cert-manager helm chart
-helm upgrade -i cert-manager --version v1.11.0 jetstack/cert-manager -n cert-manager --set serviceAccount.create=false,serviceAccount.name=cert-manager
+helm upgrade -i cert-manager --version v1.13.2 jetstack/cert-manager -n cert-manager --set serviceAccount.create=false,serviceAccount.name=cert-manager
 
 OR Let's add the repo and install the cert-manager Helm chart with this one-liner:
 
@@ -1047,10 +1192,10 @@ helm install cert-manager cert-manager \
 
 If you want to completely uninstall cert-manager from your cluster, you will also need to delete the previously installed CustomResourceDefinition resources:
 ```
-kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.crds.yam
+kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.crds.yaml
 ```
 
-6. Verify that the deployment was successful:
+7. Verify that the deployment was successful:
 ```
 kubectl get deployments -n cert-manager
 
@@ -1150,7 +1295,7 @@ The cert-manager will create a challange to verify the ownership of the domain w
 #### HTTP challenge
 The CA (in this case, Let's Encrypt) will fetch a particular URL:
 
-http://<our-domain>/.well-known/acme-challenge/<token>
+http://`<our-domain>`/.well-known/acme-challenge/`<token>`
 
 Check the path of the Ingress in particular:
 
@@ -1203,4 +1348,56 @@ If we annotate an Ingress resource with `cert-manager.io/cluster-issuer=xxx:`
 
 Note: the Ingress still needs the `tls` section with `secretName` and `hosts`
 
-Let annotate the ingress for our juice-shop app and our grafana
+Let annotate the ingress for our juice-shop app and our grafana. Update the respective ingress yaml files with the necessary annotations with the tls portion. Apply the files. You can monitor the creation of the certificates by checking the status of the order, challange and the certificate
+
+```
+$ kubectl get secret -n cert-manager
+NAME                                 TYPE                                  DATA   AGE
+cert-manager                         kubernetes.io/service-account-token   3      23h
+cert-manager-webhook-ca              Opaque                                3      14m
+letsencrypt-prod                     Opaque                                1      14m
+letsencrypt-staging                  Opaque                                1      14m
+sh.helm.release.v1.cert-manager.v1   helm.sh/release.v1                    1      14m
+
+$ kubectl get sa -n cert-manager
+NAME                      SECRETS   AGE
+cert-manager              1         23h
+cert-manager-cainjector   0         14m
+cert-manager-webhook      0         14m
+default                   0         23h
+
+$ kubectl get clusterissuer
+NAME                  READY   AGE
+letsencrypt-prod      True    20h
+letsencrypt-staging   True    22h
+
+$ kubectl apply -f ingress-juice-shop.yaml 
+ingress.networking.k8s.io/ingress-juice-shop created
+
+$ kubectl get ing -n juice-shop
+NAME                 CLASS   HOSTS                       ADDRESS                                            
+                       PORTS     AGE
+ingress-juice-shop   nginx   juice-shop.onyekaonu.site   adc79605780dd4ce1afac9ac2b48a232-1473501830.us-east-2.elb.amazonaws.com   80, 443   47s
+
+$ kubectl get certificate -n juice-shop
+NAME                        READY   SECRET                      AGE
+juice-shop.onyekaonu.site   False   juice-shop.onyekaonu.site   70s
+
+$ kubectl get order -n juice-shop
+NAME                                     STATE   AGE
+juice-shop.onyekaonu.site-1-1579354149   valid   2m2s
+
+$ kubectl get challenge -n juice-shop
+No resources found in juice-shop namespace.
+
+$ kubectl get certificate -n juice-shop
+NAME                        READY   SECRET                      AGE
+juice-shop.onyekaonu.site   True    juice-shop.onyekaonu.site   2m31s
+```
+
+kubectl get secrets `<name of the secret>` -o json | jq -r .data.password | base64 -d
+
+## References
+https://2021-03-lke.container.training/#167
+
+https://www.youtube.com/playlist?list=PLTnRtjQN5ieYD97JCZtcGbIjq1EINih2G

@@ -1,20 +1,20 @@
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: letsencrypt-staging
+  name: letsencrypt-prod
 spec:
   acme:
     email: "onyekagodonu@yahoo.com"
-    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    # server: https://acme-staging-v02.api.letsencrypt.org/directory
     # To use the production environment, use the following line instead:
-    #server: https://acme-v02.api.letsencrypt.org/directory
+    server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
-      name: letsencrypt-staging
+      name: letsencrypt-prod
     solvers:
     - selector:
         dnsZones:
-          - "onyeka.ga"
+          - "onyekaonu.site"
       dns01:
         route53:
           region: "us-east-2"
-          hostedZoneID: "Z0250004LZ1MP3VIBU47"
+          hostedZoneID: "Z061850337A04QM8X5Q1M"

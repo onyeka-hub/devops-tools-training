@@ -1,11 +1,11 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: juice-shop.onyeka.ga
+  name: juice-shop.onyekaonu.site
 spec:
-  secretName: juice-shop.onyeka.ga
+  secretName: juice-shop.onyekaonu.site
   dnsNames:
-  - juice-shop.onyeka.ga
+  - juice-shop.onyekaonu.site
   issuerRef:
     name: letsencrypt-staging
     kind: ClusterIssuer

@@ -1,15 +1,15 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  # annotations:
-  #   # add an annotation indicating the issuer to use.
-  #   cert-manager.io/cluster-issuer: "letsencrypt-staging"
+  annotations:
+    # add an annotation indicating the issuer to use.
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
   name: "ingress-juice-shop"
   namespace: juice-shop
 spec:
   ingressClassName: nginx
   rules:
-  - host: "juice-shop.onyeka.ga"
+  - host: "juice-shop.onyekaonu.site"
     http:
       paths:
       - pathType: Prefix
@@ -20,7 +20,7 @@ spec:
             port:
               number: 80
 
-  # tls:
-  # - hosts:
-  #   - "juice-shop.onyeka.ga"
-  #   secretName: "juice-shop.onyeka.ga"
+  tls:
+  - hosts:
+    - "juice-shop.onyekaonu.site"
+    secretName: "juice-shop.onyekaonu.site"
