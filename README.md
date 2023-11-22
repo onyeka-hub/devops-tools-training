@@ -1395,6 +1395,9 @@ NAME                        READY   SECRET                      AGE
 juice-shop.onyekaonu.site   True    juice-shop.onyekaonu.site   2m31s
 ```
 
+![secured juice shop](./images/secured.PNG)
+
+
 kubectl get secrets `<name of the secret>` -o json | jq -r .data.password | base64 -d
 
 ## References
