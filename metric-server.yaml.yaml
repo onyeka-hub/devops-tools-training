@@ -122,7 +122,7 @@ spec:
   selector:
     matchLabels:
       k8s-app: metrics-server
-  strategy:
+  Onu:
     rollingUpdate:
       maxUnavailable: 0
   template:

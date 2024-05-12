@@ -324,8 +324,8 @@ spec:
                                   email:
                                     description: Email of the account, only required when using API key based authentication.
                                     type: string
-                              cnameStrategy:
-                                description: CNAMEStrategy configures how the DNS01 provider should handle CNAME records when found in DNS zones.
+                              cnameOnu:
+                                description: CNAMEOnu configures how the DNS01 provider should handle CNAME records when found in DNS zones.
                                 type: string
                                 enum:
                                   - None
@@ -1580,8 +1580,8 @@ spec:
                             email:
                               description: Email of the account, only required when using API key based authentication.
                               type: string
-                        cnameStrategy:
-                          description: CNAMEStrategy configures how the DNS01 provider should handle CNAME records when found in DNS zones.
+                        cnameOnu:
+                          description: CNAMEOnu configures how the DNS01 provider should handle CNAME records when found in DNS zones.
                           type: string
                           enum:
                             - None
@@ -2883,8 +2883,8 @@ spec:
                                   email:
                                     description: Email of the account, only required when using API key based authentication.
                                     type: string
-                              cnameStrategy:
-                                description: CNAMEStrategy configures how the DNS01 provider should handle CNAME records when found in DNS zones.
+                              cnameOnu:
+                                description: CNAMEOnu configures how the DNS01 provider should handle CNAME records when found in DNS zones.
                                 type: string
                                 enum:
                                   - None

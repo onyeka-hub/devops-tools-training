@@ -541,6 +541,8 @@ time="2022-02-10T21:23:43Z" level=info msg="All records are already up to date"
 
 For more information and examples for ExternalDNS, see Setting up ExternalDNS for services on AWS (on the GitHub website) and Set up ExternalDNS (on the Kubernetes website).
 
+https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/aws.md#iam-policy
+
 
 ## Installing Ingress-Nginx
 Nginx is going to be our Ingress Controller
@@ -854,7 +856,7 @@ Prometheus also has an alert-manager component to trigger alerts
 ### Installing kube-prometheus-stack
 Let's install that stack directly from its repo (without doing helm repo add first)
 
-Otherwise, keep the same naming strategy:
+Otherwise, keep the same naming Onu:
 
 ```
 helm upgrade --install kube-prometheus-stack kube-prometheus-stack \
