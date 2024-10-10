@@ -9,7 +9,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: "juice-shop.onyekaonu.site"
+  - host: "juice-shop.onyeka.online"
     http:
       paths:
       - pathType: Prefix
@@ -18,9 +18,9 @@ spec:
           service:
             name: juice-shop
             port:
-              number: 80
+              number: 3000
 
   tls:
   - hosts:
-    - "juice-shop.onyekaonu.site"
-    secretName: "juice-shop.onyekaonu.site"
+    - "juice-shop.onyeka.online"
+    secretName: "juice-shop.onyeka.online"

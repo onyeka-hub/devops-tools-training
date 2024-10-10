@@ -1,15 +1,15 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  # annotations:
-  #   # add an annotation indicating the issuer to use.
-  #   cert-manager.io/cluster-issuer: "letsencrypt-staging"
+  annotations:
+    # add an annotation indicating the issuer to use.
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
   name: "ingress-grafana"
   namespace: kube-prometheus-stack
 spec:
   ingressClassName: nginx
   rules:
-  - host: "grafana.onyekaonu.site"
+  - host: "grafana.onyeka.online"
     http:
       paths:
       - pathType: Prefix
@@ -20,7 +20,7 @@ spec:
             port:
               number: 80
 
-  # tls:
-  # - hosts:
-  #   - "grafana.onyekaonu.site"
-  #   secretName: "grafana.onyekaonu.site"
+  tls:
+  - hosts:
+    - "grafana.onyeka.online"
+    secretName: "grafana.onyeka.online"

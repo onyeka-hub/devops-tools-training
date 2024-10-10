@@ -1,0 +1,45 @@
+global:
+  hosts:
+    domain: "onyeka.online"
+
+  edition: ce
+
+  ingress:
+    class: "nginx"
+    configureCertmanager: false
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    tls:
+      enabled: true
+      secretName: "gitlab.onyeka.online"
+
+  kas:
+    enabled: false
+
+gitlab:
+  webservice:
+    tls:
+      enabled: true
+      secretName: "gitlab-webservice-tls"
+    ingress:
+      tls:
+        secretName: "gitlab-webservice-tls"
+
+minio:
+  ingress:
+    tls:
+      secretName: "minio.onyeka.online"
+
+registry:
+  ingress:
+    tls:
+      secretName: "registry.onyeka.online"
+
+certmanager:
+  install: false
+nginx-ingress:
+  enabled: false
+
+gitlab-runner:
+  runners:
+    privileged: true
